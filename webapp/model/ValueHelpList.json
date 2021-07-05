@@ -1,0 +1,38 @@
+[
+  {
+    "title": "Series Code and its descriptions",
+    "cds": "ZZ1_PTP_ZSERIESCODE_CDS"
+  },
+  {
+    "title": "Subject",
+    "cds": "ZZ1_PTP_T600_CDS"
+  },
+  {
+    "title": "Product Type",
+    "cds": "ZZ1_PTP_T601_CDS"
+  },
+  {
+    "title": "Market",
+    "cds": "ZZ1_PTP_T603_CDS"
+  },
+  {
+    "title": "Level",
+    "cds": "ZZ1_PTP_T604_CDS"
+  },
+  {
+    "title": "Responsible Editor",
+    "cds": "ZZ1_PTP_T605_CDS"
+  },
+  {
+    "title": "Source",
+    "cds": "ZZ1_PTP_T606_CDS"
+  },
+  {
+    "title": "Pack Information",
+    "cds": "ZZ1_PTP_T607_CDS"
+  },
+  {
+    "title": "Composer/Author",
+    "cds": "ZZ1_PTP_T608_CDS"
+  }
+]

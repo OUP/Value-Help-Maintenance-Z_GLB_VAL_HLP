@@ -1,0 +1,48 @@
+<mvc:View
+	controllerName="oup.glb.zglbvaluehelp.controller.Object"
+	xmlns="sap.m"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:semantic="sap.f.semantic">
+
+	<semantic:SemanticPage
+		id="page"
+		headerPinnable="false"
+		toggleHeaderOnTitleClick="false"
+		busy="{objectView>/busy}"
+		busyIndicatorDelay="{objectView>/delay}">
+
+		<semantic:titleHeading>
+            <Title
+				text="Maintain Value Help - {objectView>/pageTitle}"
+				level="H2"/>
+		</semantic:titleHeading>
+
+		<semantic:headerContent>
+            <FlexBox
+                height="50px"
+				alignItems="Center"
+				justifyContent="SpaceBetween">
+                <Title
+                    text="{objectView>/pageTitleCDS}"
+                    level="H2"/>
+				<HBox>
+                    <Button 
+                        text="Save" 
+                        visible="{objectView>/isPageEditable}"
+                        press=".onBulkSavePress"
+                        class="sapUiTinyMarginEnd" >
+                    </Button>
+                    <ToggleButton 
+                        text="{= ${objectView>/isPageEditable} ? 'Cancel' : 'Edit' }" 
+                        pressed="{objectView>/isPageEditable}"
+                        press=".onPageEditTogglePress" >
+                    </ToggleButton>
+                </HBox>
+			</FlexBox>
+		</semantic:headerContent>
+
+        <VBox id="dynamicValueHelpTableContainerId" fitContainer="true" />
+
+	</semantic:SemanticPage>
+
+</mvc:View>
