@@ -9,7 +9,8 @@
 		headerPinnable="false"
 		toggleHeaderOnTitleClick="false"
 		busy="{objectView>/busy}"
-		busyIndicatorDelay="{objectView>/delay}">
+		busyIndicatorDelay="{objectView>/delay}"
+        showFooter="{objectView>/isPageEditable}">
 
 		<semantic:titleHeading>
             <Title
@@ -17,29 +18,34 @@
 				level="H2"/>
 		</semantic:titleHeading>
 
+        <!-- Header Content -->
 		<semantic:headerContent>
-            <FlexBox
-                height="50px"
-				alignItems="Center"
-				justifyContent="SpaceBetween">
-                <Title
-                    text="{objectView>/pageTitleCDS}"
-                    level="H2"/>
-				<HBox>
-                    <Button 
-                        text="Save" 
-                        visible="{objectView>/isPageEditable}"
-                        press=".onBulkSavePress"
-                        class="sapUiTinyMarginEnd" >
-                    </Button>
-                    <ToggleButton 
-                        text="{= ${objectView>/isPageEditable} ? 'Cancel' : 'Edit' }" 
-                        pressed="{objectView>/isPageEditable}"
-                        press=".onPageEditTogglePress" >
-                    </ToggleButton>
-                </HBox>
-			</FlexBox>
-		</semantic:headerContent>
+            <Title
+                text="{objectView>/pageTitleCDS}"
+                level="H4"/>
+        </semantic:headerContent>
+
+        <!-- Edit Content-->
+        <semantic:titleMainAction>
+			<semantic:TitleMainAction text="Edit" press="onEditPress" visible="{= !${objectView>/isPageEditable}}"/>
+		</semantic:titleMainAction>
+
+        <!-- Custom Title Text Content-->
+		<semantic:titleCustomTextActions>
+			<Button icon="sap-icon://decline" press=".onClosePress"/>
+		</semantic:titleCustomTextActions>
+
+        <!-- Custom Footer Content-->
+		<semantic:footerCustomActions>
+			<Button 
+                text="Save"
+                press=".onSavePress"
+                type="Emphasized"
+                class="sapUiTinyMarginEnd" />
+			<Button 
+                text="Cancel"
+                press=".onCancelPress" />
+		</semantic:footerCustomActions>
 
         <VBox id="dynamicValueHelpTableContainerId" fitContainer="true" />
 

@@ -24,6 +24,8 @@ sap.ui.define(
     "sap/m/MessageToast",
     "../model/formatter",
     "./ErrorHandler",
+    "sap/m/ComboBox",
+    "sap/ui/core/Item",
   ],
   function (
     BaseController,
@@ -49,7 +51,9 @@ sap.ui.define(
     MessageBox,
     MessageToast,
     formatter,
-    ErrorHandler
+    ErrorHandler,
+    ComboBox,
+    Item
   ) {
     "use strict";
 
@@ -113,6 +117,20 @@ sap.ui.define(
           () => _oViewModel.setProperty("/delay", iOriginalBusyDelay),
           1000
         );
+
+        //Country Collection
+        var oCountryJModel = new JSONModel();
+        oCountryJModel.loadData(
+          "/sap/opu/odata/sap/ZPTP_SB_UI_COUNTRYVH_O2/I_CountryVH"
+        );
+        this.getView().setModel(oCountryJModel, "Country");
+
+        //Condition type Collection
+        var oConditionJModel = new JSONModel();
+        oConditionJModel.loadData(
+          "/sap/opu/odata/sap/ZPTP_SB_UI_CONDTYPE_O2/ZPTP_I_CONDTYPEVH"
+        );
+        this.getView().setModel(oConditionJModel, "CondType");
       },
 
       /* =========================================================== */
@@ -125,7 +143,7 @@ sap.ui.define(
        * If not, it will replace the current entry of the browser history with the worklist route.
        * @public
        */
-      onNavBack: function () {
+      onClosePress: function () {
         var sPreviousHash = History.getInstance().getPreviousHash();
 
         if (sPreviousHash !== undefined) {
@@ -135,34 +153,29 @@ sap.ui.define(
         }
       },
 
-      onPageEditTogglePress: function (oEvent) {
+      onCancelPress: function (oEvent) {
         // clear the table changes
-        if (!oEvent.getParameter("pressed")) {
-          if (_oDynamicModel.hasPendingChanges()) {
-            const bCompact = !!_oView.$().closest(".sapUiSizeCompact").length;
+        if (_oDynamicModel.hasPendingChanges()) {
+          const bCompact = !!_oView.$().closest(".sapUiSizeCompact").length;
 
-            // check any row is selected before
-            MessageBox.confirm(
-              "Are you sure, you want to discard the changes?",
-              {
-                actions: [MessageBox.Action.OK, MessageBox.Action.CANCEL],
-                emphasizedAction: MessageBox.Action.OK,
-                styleClass: bCompact ? "sapUiSizeCompact" : "",
-                onClose: (sAction) => {
-                  if (sAction !== MessageBox.Action.OK) {
-                    return;
-                  }
-
-                  // reset changes
-                  _oDynamicModel.resetChanges();
-                },
+          // check any row is selected before
+          MessageBox.confirm("Are you sure, you want to discard the changes?", {
+            actions: [MessageBox.Action.OK, MessageBox.Action.CANCEL],
+            emphasizedAction: MessageBox.Action.OK,
+            styleClass: bCompact ? "sapUiSizeCompact" : "",
+            onClose: (sAction) => {
+              if (sAction !== MessageBox.Action.OK) {
+                return;
               }
-            );
-          }
+
+              // reset changes
+              _oDynamicModel.resetChanges();
+            },
+          });
         }
       },
 
-      onBulkSavePress: function () {
+      onSavePress: function () {
         const bCompact = !!_oView.$().closest(".sapUiSizeCompact").length;
 
         // set busy
@@ -228,6 +241,10 @@ sap.ui.define(
         }
       },
 
+      onCancelPress: () => _oViewModel.setProperty("/isPageEditable", false),
+
+      onEditPress: () => _oViewModel.setProperty("/isPageEditable", true),
+
       /* =========================================================== */
       /* internal methods                                            */
       /* =========================================================== */
@@ -253,6 +270,7 @@ sap.ui.define(
         } else {
           // set the value in view model
           _oViewModel.setProperty("/pageTitle", `${_aHeaderDetails[0].title}`);
+          _oViewModel.setProperty("/entity", `${_aHeaderDetails[0].entity}`);
           _oViewModel.setProperty(
             "/pageTitleCDS",
             `CDS: ${_aHeaderDetails[0].cds}`
@@ -266,6 +284,12 @@ sap.ui.define(
         const _oHeaderList = this.getModel("valueHelpList").getData();
         // filter by cds view name
         return _oHeaderList.filter((obj) => obj.cds === sCDS);
+      },
+
+      _checkFrieghtData: (sValue) => {
+        const aData = ["COUNTRY", "RATE", "CONDTYPE"];
+        const aResult = aData.filter((obj) => obj === sValue) || [];
+        return aResult.length > 0;
       },
 
       /**
@@ -320,9 +344,9 @@ sap.ui.define(
                 ),
             });
 
-            //Table Column Definitions
+            // table column definitions
             const oMeta = _oDynamicModel.getServiceMetadata();
-            const sEntity = sServiceURL.split("_CDS")[0];
+            const sEntity = _oViewModel.getProperty("/entity"); // sServiceURL.split("_CDS")[0];
 
             for (const oEntityType of oMeta.dataServices.schema[0].entityType) {
               // check the valid entity
@@ -366,11 +390,65 @@ sap.ui.define(
                   });
                 }
 
+                // add CONDTYPE for freight rate BO
+                if (sEntity === "FREIGHTRATES" && index === 3) {
+                  _aDynamicFields.push({
+                    label: sLable,
+                    name: oProperty.name,
+                  });
+                }
+
                 // default control
                 let oControl = new SmartField({
                   value: `{path: '${oProperty.name}'}`,
                   editable: false,
                 });
+
+                // change control for freight rate
+                if (this._checkFrieghtData(oProperty.name)) {
+                  if (oProperty.name === "COUNTRY") {
+                    let oTemplateLItem = new ListItem({
+                      key: "{Country>Country}",
+                      text: "{Country>Country}",
+                      additionalText: "{Country>Description}",
+                    });
+                    oControl = new ComboBox({
+                      value: `{path: '${oProperty.name}',  mode: 'TwoWay'}`,
+                      selectedKey: `{path: '${oProperty.name}',  mode: 'TwoWay'}`,
+                      editable: `{objectView>/isPageEditable}`,
+                      width: "100%",
+                      showSecondaryValues: true,
+                      items: {
+                        path: "Country>/d/results",
+                        templateShareable: false,
+                        template: oTemplateLItem,
+                      },
+                    });
+                  } else if (oProperty.name === "CONDTYPE") {
+                    let oTemplateLItem = new ListItem({
+                      key: "{CondType>vtext}",
+                      text: "{CondType>kschl}",
+                      additionalText: "{CondType>vtext}",
+                    });
+                    oControl = new ComboBox({
+                      value: `{path: '${oProperty.name}',  mode: 'TwoWay'}`,
+                      selectedKey: `{path: '${oProperty.name}',  mode: 'TwoWay'}`,
+                      editable: `{objectView>/isPageEditable}`,
+                      width: "100%",
+                      showSecondaryValues: true,
+                      items: {
+                        path: "CondType>/d/results",
+                        templateShareable: false,
+                        template: oTemplateLItem,
+                      },
+                    });
+                  } else {
+                    oControl = new SmartField({
+                      value: `{path: '${oProperty.name}',  mode: 'TwoWay'}`,
+                      editable: `{objectView>/isPageEditable}`,
+                    });
+                  }
+                }
 
                 // description bulk edit mode
                 if (oProperty.name === "SAP_Description") {
@@ -390,6 +468,8 @@ sap.ui.define(
                   width:
                     oProperty.name === "SAP_Description" ? "300px" : "auto",
                 });
+
+                // add column to table
                 _oDynamicTable.addColumn(oColumn);
               }
             }
