@@ -560,17 +560,59 @@ sap.ui.define(
                 // dynamic properties
                 for (const dyanamicField of _aDynamicFields) {
                   let aContent = [];
+                  let oTemplateLItem;
+                  let oControl;
 
                   // label
                   aContent.push(new Label({ text: dyanamicField.label }));
 
                   // field
-                  aContent.push(
-                    new SmartField(dyanamicField.name, {
-                      value: `{path: '${dyanamicField.name}', mode: 'TwoWay'}`,
+                  if (dyanamicField.name === "COUNTRY") {
+                    oTemplateLItem = new ListItem({
+                      key: "{Country>Country}",
+                      text: "{Country>Country}",
+                      additionalText: "{Country>Description}",
+                    });
+                    oControl = new ComboBox(dyanamicField.name, {
+                      value: `{path: '${dyanamicField.name}',  mode: 'TwoWay'}`,
+                      selectedKey: `{path: '${dyanamicField.name}',  mode: 'TwoWay'}`,
+                      width: "100%",
+                      showSecondaryValues: true,
                       mandatory: true,
-                    })
-                  );
+                      items: {
+                        path: "Country>/d/results",
+                        templateShareable: false,
+                        template: oTemplateLItem,
+                      },
+                    });
+                    aContent.push(oControl);
+                  } else if (dyanamicField.name === "CONDTYPE") {
+                    oTemplateLItem = new ListItem({
+                      key: "{CondType>vtext}",
+                      text: "{CondType>kschl}",
+                      additionalText: "{CondType>vtext}",
+                    });
+                    oControl = new ComboBox(dyanamicField.name, {
+                      value: `{path: '${dyanamicField.name}',  mode: 'TwoWay'}`,
+                      selectedKey: `{path: '${dyanamicField.name}',  mode: 'TwoWay'}`,
+                      width: "100%",
+                      showSecondaryValues: true,
+                      mandatory: true,
+                      items: {
+                        path: "CondType>/d/results",
+                        templateShareable: false,
+                        template: oTemplateLItem,
+                      },
+                    });
+                    aContent.push(oControl);
+                  } else {
+                    aContent.push(
+                      new SmartField(dyanamicField.name, {
+                        value: `{path: '${dyanamicField.name}', mode: 'TwoWay'}`,
+                        mandatory: true,
+                      })
+                    );
+                  }
 
                   aFormContent.push(aContent);
                 }
