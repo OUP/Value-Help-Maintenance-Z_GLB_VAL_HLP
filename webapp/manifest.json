@@ -12,9 +12,13 @@
     },
     "resources": "resources.json",
     "dataSources": {
-      "valueHelpDataSource": {
-        "uri": "model/ValueHelpList.json",
-        "type": "JSON"
+      "mainService": {
+        "uri": "/sap/opu/odata/sap/ZGLBFAB_COMMON_SRV",
+        "type": "OData",
+        "settings": {
+          "odataVersion": "2.0",
+          "localUri": "localService/metadata.xml"
+        }
       }
     }
   },
@@ -37,6 +41,15 @@
   },
 
   "sap.ui5": {
+    "resources": {
+      "js": [],
+      "css": [
+        {
+          "uri": "css/style.css"
+        }
+      ]
+    },
+
     "rootView": {
       "viewName": "oup.glb.zglbvaluehelp.view.App",
       "type": "XML",
@@ -65,9 +78,12 @@
           "bundleName": "oup.glb.zglbvaluehelp.i18n.i18n"
         }
       },
-      "valueHelpList": {
-        "type": "sap.ui.model.json.JSONModel",
-        "dataSource": "valueHelpDataSource"
+      "": {
+        "dataSource": "mainService",
+        "settings": {
+          "defaultCountMode": "None"
+        },
+        "preload": true
       }
     },
 

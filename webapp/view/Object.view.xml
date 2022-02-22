@@ -47,7 +47,7 @@
                 press=".onCancelPress" />
 		</semantic:footerCustomActions>
 
-        <VBox id="dynamicValueHelpTableContainerId" fitContainer="true" />
+        <VBox id="dynamicValueHelpTableContainerId" fitContainer="true" class="dynamic-container"/>
 
 	</semantic:SemanticPage>
 

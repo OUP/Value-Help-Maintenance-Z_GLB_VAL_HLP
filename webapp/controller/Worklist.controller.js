@@ -154,7 +154,7 @@ sap.ui.define(
        */
       _showObject: function (oItem) {
         this.getRouter().navTo("object", {
-          cds: oItem.getBindingContext("valueHelpList").getProperty("cds"),
+          cds: oItem.getBindingContext().getProperty("cds"),
         });
       },
 

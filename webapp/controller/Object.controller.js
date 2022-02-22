@@ -17,15 +17,11 @@ sap.ui.define(
     "sap/m/Label",
     "sap/m/Button",
     "sap/m/ButtonType",
-    "sap/m/Text",
-    "sap/m/Input",
-    "sap/m/Select",
     "sap/m/MessageBox",
     "sap/m/MessageToast",
+    "sap/m/ComboBox",
     "../model/formatter",
     "./ErrorHandler",
-    "sap/m/ComboBox",
-    "sap/ui/core/Item",
   ],
   function (
     BaseController,
@@ -45,15 +41,11 @@ sap.ui.define(
     Label,
     Button,
     ButtonType,
-    Text,
-    Input,
-    Select,
     MessageBox,
     MessageToast,
-    formatter,
-    ErrorHandler,
     ComboBox,
-    Item
+    formatter,
+    ErrorHandler
   ) {
     "use strict";
 
@@ -67,7 +59,7 @@ sap.ui.define(
     let _oView = null;
     let _bCreate = false;
     let _oErrorHandler = null;
-    let _aHeaderDetails = [];
+    let _oHeaderDetails = {};
     const _sGroupId = `${new Date().getTime()}`;
 
     return BaseController.extend("oup.glb.zglbvaluehelp.controller.Object", {
@@ -124,13 +116,6 @@ sap.ui.define(
           "/sap/opu/odata/sap/ZPTP_SB_UI_COUNTRYVH_O2/I_CountryVH"
         );
         this.getView().setModel(oCountryJModel, "Country");
-
-        //Condition type Collection
-        var oConditionJModel = new JSONModel();
-        oConditionJModel.loadData(
-          "/sap/opu/odata/sap/ZPTP_SB_UI_CONDTYPE_O2/ZPTP_I_CONDTYPEVH"
-        );
-        this.getView().setModel(oConditionJModel, "CondType");
       },
 
       /* =========================================================== */
@@ -153,7 +138,7 @@ sap.ui.define(
         }
       },
 
-      onCancelPress: function (oEvent) {
+      onCancelPress: function () {
         // clear the table changes
         if (_oDynamicModel.hasPendingChanges()) {
           const bCompact = !!_oView.$().closest(".sapUiSizeCompact").length;
@@ -255,35 +240,40 @@ sap.ui.define(
        * @param {sap.ui.base.Event} oEvent pattern match event in route 'object'
        * @private
        */
-      _onObjectMatched: function (oEvent) {
-        // set busy indicator
-        _oViewModel.setProperty("/busy", true);
+      _onObjectMatched: async function (oEvent) {
+        try {
+          // set busy indicator
+          _oViewModel.setProperty("/busy", true);
 
-        // get cds name
-        var sCDS = oEvent.getParameter("arguments").cds;
+          // get cds name
+          var sCDS = oEvent.getParameter("arguments").cds;
 
-        // get valueHelpList details
-        _aHeaderDetails = this._loadHeaderDetails(sCDS);
+          // get valueHelpList details
+          _oHeaderDetails = await this._loadHeaderDetails(sCDS);
 
-        if (_aHeaderDetails.length === 0) {
-          // cds is not maintained in value help list
-        } else {
           // set the value in view model
-          _oViewModel.setProperty("/pageTitle", `${_aHeaderDetails[0].title}`);
-          _oViewModel.setProperty("/entity", `${_aHeaderDetails[0].entity}`);
+          _oViewModel.setProperty("/pageTitle", `${_oHeaderDetails.title}`);
+          _oViewModel.setProperty("/entity", `${_oHeaderDetails.entity}`);
           _oViewModel.setProperty(
             "/pageTitleCDS",
-            `CDS: ${_aHeaderDetails[0].cds}`
+            `CDS: ${_oHeaderDetails.cds}`
           );
 
           this._loadDynamicModel(sCDS);
+        } catch (error) {
+          // cds is not maintained in value help list
+          // set busy indicator
+          _oViewModel.setProperty("/busy", false);
         }
       },
 
       _loadHeaderDetails: function (sCDS) {
-        const _oHeaderList = this.getModel("valueHelpList").getData();
-        // filter by cds view name
-        return _oHeaderList.filter((obj) => obj.cds === sCDS);
+        return new Promise((resolve, reject) => {
+          _oView.getModel().read(`/VH_MaterListSet('${sCDS}')`, {
+            success: (oData) => resolve(oData),
+            error: (oError) => reject(oError),
+          });
+        });
       },
 
       _checkFrieghtData: (sValue) => {
@@ -303,6 +293,9 @@ sap.ui.define(
           `/sap/opu/odata/sap/${sServiceURL}/`,
           true
         );
+
+        // set count mode - none
+        _oDynamicModel.setDefaultCountMode(sap.ui.model.odata.CountMode.None);
 
         // destroy dynamic container items
         _oDynamicTableContainer.destroyItems();
@@ -337,6 +330,7 @@ sap.ui.define(
 
             _oDynamicTable = new Table({
               visibleRowCount: 10,
+              visibleRowCountMode: "Auto",
               rowSelectionChange: (_) =>
                 _oViewModel.setProperty(
                   "/isMinRowSelected",
@@ -391,7 +385,10 @@ sap.ui.define(
                 }
 
                 // add CONDTYPE for freight rate BO
-                if (sEntity === "FREIGHTRATES" && index === 3) {
+                if (
+                  sEntity === "FREIGHTRATES" &&
+                  (index === 3 || index === 4)
+                ) {
                   _aDynamicFields.push({
                     label: sLable,
                     name: oProperty.name,
@@ -420,24 +417,6 @@ sap.ui.define(
                       showSecondaryValues: true,
                       items: {
                         path: "Country>/d/results",
-                        templateShareable: false,
-                        template: oTemplateLItem,
-                      },
-                    });
-                  } else if (oProperty.name === "CONDTYPE") {
-                    let oTemplateLItem = new ListItem({
-                      key: "{CondType>vtext}",
-                      text: "{CondType>kschl}",
-                      additionalText: "{CondType>vtext}",
-                    });
-                    oControl = new ComboBox({
-                      value: `{path: '${oProperty.name}',  mode: 'TwoWay'}`,
-                      selectedKey: `{path: '${oProperty.name}',  mode: 'TwoWay'}`,
-                      editable: `{objectView>/isPageEditable}`,
-                      width: "100%",
-                      showSecondaryValues: true,
-                      items: {
-                        path: "CondType>/d/results",
                         templateShareable: false,
                         template: oTemplateLItem,
                       },
@@ -581,25 +560,6 @@ sap.ui.define(
                       mandatory: true,
                       items: {
                         path: "Country>/d/results",
-                        templateShareable: false,
-                        template: oTemplateLItem,
-                      },
-                    });
-                    aContent.push(oControl);
-                  } else if (dyanamicField.name === "CONDTYPE") {
-                    oTemplateLItem = new ListItem({
-                      key: "{CondType>vtext}",
-                      text: "{CondType>kschl}",
-                      additionalText: "{CondType>vtext}",
-                    });
-                    oControl = new ComboBox(dyanamicField.name, {
-                      value: `{path: '${dyanamicField.name}',  mode: 'TwoWay'}`,
-                      selectedKey: `{path: '${dyanamicField.name}',  mode: 'TwoWay'}`,
-                      width: "100%",
-                      showSecondaryValues: true,
-                      mandatory: true,
-                      items: {
-                        path: "CondType>/d/results",
                         templateShareable: false,
                         template: oTemplateLItem,
                       },
@@ -812,7 +772,7 @@ sap.ui.define(
               new Toolbar({
                 content: [
                   new Title("tableTitleId", {
-                    text: `${_aHeaderDetails[0].title}`,
+                    text: `${_oHeaderDetails.title}`,
                   }),
                   new ToolbarSpacer(),
                   new Button({
@@ -846,18 +806,21 @@ sap.ui.define(
                   try {
                     // set busy indicator
                     _oViewModel.setProperty("/busy", false);
-                    // update table count
-                    sap.ui
-                      .getCore()
-                      .byId("tableTitleId")
-                      .setText(
-                        `${_aHeaderDetails[0].title} 
-                        (${_.getParameter("data").results.length})`
-                      );
                   } catch (error) {
                     // table title is not updated
                   }
                 },
+              },
+            });
+
+            // get count
+            _oDynamicModel.read(`/${sEntity}/$count`, {
+              success: (sCountResponse) => {
+                // update table count
+                sap.ui
+                  .getCore()
+                  .byId("tableTitleId")
+                  .setText(`${_oHeaderDetails.title} (${sCountResponse})`);
               },
             });
 

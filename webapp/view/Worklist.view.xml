@@ -20,7 +20,7 @@
 				id="table"
 				width="auto"
 				items="{
-					path: 'valueHelpList>/'
+					path: '/VH_MaterListSet'
 				}"
 				noDataText="{worklistView>/tableNoDataText}"
 				busyIndicatorDelay="{worklistView>/tableBusyDelay}"
@@ -63,8 +63,8 @@
 						press=".onPress">
 						<cells>
 							<ObjectIdentifier
-								title="{valueHelpList>title}"/>
-                            <Text text="{valueHelpList>cds}" />
+								title="{title}"/>
+                            <Text text="{cds}" />
 						</cells>
 					</ColumnListItem>
 				</items>

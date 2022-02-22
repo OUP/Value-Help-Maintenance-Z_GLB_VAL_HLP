@@ -1,0 +1,4 @@
+/* dynamic container child style */
+.dynamic-container .sapMFlexItem:first-child {
+  height: 100%;
+}
