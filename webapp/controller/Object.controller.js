@@ -323,6 +323,9 @@ sap.ui.define(
 
         _oDynamicModel.metadataLoaded().then(() => {
           try {
+            // set size limit
+            _oDynamicModel.setSizeLimit(999999);
+
             // set deferred group for batch operations
             _oDynamicModel.setDeferredGroups(
               _oDynamicModel.getDeferredGroups().concat([_sGroupId])
@@ -331,6 +334,7 @@ sap.ui.define(
             _oDynamicTable = new Table({
               visibleRowCount: 10,
               visibleRowCountMode: "Auto",
+              threshold: 999999,
               rowSelectionChange: (_) =>
                 _oViewModel.setProperty(
                   "/isMinRowSelected",
@@ -732,6 +736,7 @@ sap.ui.define(
 
                     // set busy status
                     _oDynamicDialog.setBusy(true);
+                    sap.ui.core.BusyIndicator.show(0);
 
                     // odata delete call
                     for (const index of _oDynamicTable.getSelectedIndices()) {
@@ -752,14 +757,26 @@ sap.ui.define(
                         MessageBox.success("Deleted Successfully", {
                           styleClass: bCompact ? "sapUiSizeCompact" : "",
                         });
+                        
+                        // clear selection
+                        _oDynamicTable.clearSelection();
+
+                        // update table count
+                        this._updateTableCount(sEntity);
+
+                        // set busy status
                         _oDynamicDialog.setBusy(false);
+                        sap.ui.core.BusyIndicator.show(0);
                       },
                       error: function (oErrorResponse) {
                         MessageBox.error("Error in deletion", {
                           details: oErrorResponse.toString(),
                           styleClass: bCompact ? "sapUiSizeCompact" : "",
                         });
+                        
+                        // set busy status
                         _oDynamicDialog.setBusy(false);
+                        sap.ui.core.BusyIndicator.show(0);
                       },
                     });
                   },
@@ -813,16 +830,8 @@ sap.ui.define(
               },
             });
 
-            // get count
-            _oDynamicModel.read(`/${sEntity}/$count`, {
-              success: (sCountResponse) => {
-                // update table count
-                sap.ui
-                  .getCore()
-                  .byId("tableTitleId")
-                  .setText(`${_oHeaderDetails.title} (${sCountResponse})`);
-              },
-            });
+            // update table count
+            this._updateTableCount(sEntity);
 
             // add dynamic table to container
             _oDynamicTableContainer.addItem(_oDynamicTable);
@@ -831,6 +840,19 @@ sap.ui.define(
             // set busy indicator
             _oViewModel.setProperty("/busy", false);
           }
+        });
+      },
+
+      _updateTableCount: (sEntity) => {
+        // get count
+        _oDynamicModel.read(`/${sEntity}/$count`, {
+          success: (sCountResponse) => {
+            // update table count
+            sap.ui
+              .getCore()
+              .byId("tableTitleId")
+              .setText(`${_oHeaderDetails.title} (${sCountResponse})`);
+          },
         });
       },
     });
