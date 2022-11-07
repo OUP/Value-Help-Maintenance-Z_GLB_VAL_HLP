@@ -112,8 +112,9 @@ sap.ui.define(
 
         //Country Collection
         var oCountryJModel = new JSONModel();
+        oCountryJModel.setSizeLimit(999);
         oCountryJModel.loadData(
-          "/sap/opu/odata/sap/ZPTP_SB_UI_COUNTRYVH_O2/I_CountryVH"
+          "/sap/opu/odata/sap/ZPTP_SB_UI_COUNTRYVH_O2/I_CountryVH?$top=999&$skip=0"
         );
         this.getView().setModel(oCountryJModel, "Country");
       },
